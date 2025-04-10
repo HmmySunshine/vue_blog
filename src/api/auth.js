@@ -24,6 +24,15 @@ export function registerUser(userData) {
  * @returns {Promise} API响应
  */
 export function checkUsernameAvailability(username) {
-  return axios.post("/api/auth/username-validation", { username });
-}
+    return axios.post("/api/auth/username-validation", { username });
+  }
+  
+  /**
+   * 用户登录
+   * @param {Object} credentials 登录凭证（用户名和密码）
+   * @returns {Promise} API响应
+   */
+  export function login(credentials) {
+    return axios.post("/api/login", credentials);
+  }
 

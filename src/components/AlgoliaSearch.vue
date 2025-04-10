@@ -8,7 +8,7 @@
         class="search-input"
       />
       <div class="algolia-attribution">
-        <span>通过alogolia Api服务进行搜索(感谢)</span>
+        <span>通过Algolia API服务进行搜索</span>
         <img src="../assets/Algolia.svg" alt="Algolia" class="algolia-logo" />
       </div>
     </div>
@@ -20,40 +20,28 @@
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="hits.length" class="search-results">
-      <div 
-        v-for="hit in hits" 
-        :key="hit.objectID" 
-        class="search-result-item"
-        @click="viewArticle(hit.objectID)"
-      >
-        <h3 v-html="hit._highlightResult.title.value"></h3>
-        <div 
-          v-html="getFormattedSummary(hit._highlightResult.summary.value)" 
-          class="summary markdown-content"
-        ></div>
-        <div class="meta-info">
-          <span class="category">{{ hit.categoryName }}</span>
-          <span class="date">{{ formatDate(hit.createTime) }}</span>
-        </div>
-        <div class="tags">
-          <span v-for="(tag, index) in hit.tags" :key="index" class="tag">
-            {{ tag }}
-          </span>
-        </div>
-      </div>
+      <SearchResultItem
+        v-for="hit in hits"
+        :key="hit.objectID"
+        :result="hit"
+        @click="viewArticle"
+      />
     </div>
 
     <div v-if="hits.length === 0 && !loading && query" class="no-results">
-      No results found
+      没有找到相关结果
     </div>
   </div>
 </template>
-  
-  <script>
-import algoliasearch from "algoliasearch";
-import marked from 'marked'; // 添加 marked 导入
+
+<script>
+import { searchService } from '@/services/search';
+import SearchResultItem from '@/components/SearchResultItem.vue';
 
 export default {
+  components: {
+    SearchResultItem
+  },
   data() {
     return {
       query: "",
@@ -72,50 +60,29 @@ export default {
       this.loading = true;
       this.error = null;
 
-      const client = algoliasearch(
-        "Y66RW22AX0",
-        "def7570d0b483c891c0c8fb8ccb14376"
-      );
-      const index = client.initIndex("articles");
-
-      index
-        .search(this.query)
-        .then(({ hits }) => {
+      searchService.searchArticles(this.query)
+        .then(hits => {
           this.hits = hits;
         })
-        .catch((err) => {
-          this.error = "An error occurred: " + err.message;
+        .catch(err => {
+          this.error = "搜索出错: " + err.message;
         })
         .finally(() => {
           this.loading = false;
         });
     },
-    formatDate(date) {
-      const options = { year: "numeric", month: "short", day: "numeric" };
-      return new Date(date).toLocaleDateString("en-US", options);
-    },
-    viewArticle(objectID) {
-      this.$router.push(`/article/${objectID}`);
-    },
-    getFormattedSummary(summary) {
-      if (!summary) return '';
-      // 处理高亮文本
-      const processedSummary = summary.replace(
-        /<em>(.*?)<\/em>/g, 
-        '<span class="highlight">$1</span>'
-      );
-      // 转换 Markdown 并返回
-      return marked(processedSummary);
+    viewArticle(id) {
+      this.$router.push(`/article/${id}`);
     }
-  },
+  }
 };
 </script>
-  
-  <style scoped>
+
+<style scoped>
 .search-container {
   width: 100%;
-  max-width: 1200px; /* 增加最大宽度 */
-  margin: 20px auto;
+  max-width: 800px; /* 缩小最大宽度 */
+  margin: 30px auto; /* 增加上下边距 */
   padding: 0 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -123,14 +90,14 @@ export default {
 .search-input-container {
   position: relative;
   margin-bottom: 45px;
-  width: 100%; /* 确保输入框容器占满宽度 */
+  width: 100%;
 }
 
 .search-input {
   width: 100%;
-  padding: 15px 40px 15px 20px; /* 增加内边距 */
+  padding: 15px 40px 15px 20px;
   font-size: 16px;
-  border: 1px solid #e0e0e0; /* 添加边框 */
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
   background-color: #ffffff;
   color: #1d1d1f;
@@ -147,32 +114,33 @@ export default {
 .algolia-attribution {
   position: absolute;
   right: 12px;
-  bottom: -35px; /* 调整位置 */
+  bottom: -38px; /* 调整位置 */
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px; /* 增加间距 */
+  font-size: 13px; /* 增大字体 */
   color: #5468ff;
-  background-color: white; /* 添加背景色 */
-  padding: 4px 8px; /* 添加内边距 */
-  border-radius: 4px; /* 添加圆角 */
-  z-index: 10; /* 确保显示在搜索结果上方 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 添加轻微阴影 */
+  background-color: white;
+  padding: 5px 10px; /* 增加内边距 */
+  border-radius: 4px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .algolia-logo {
-  height: 16px;
+  height: 18px; /* 增大logo尺寸 */
   opacity: 0.9;
   transition: opacity 0.2s ease;
 }
 
 .search-results {
   position: relative;
-  z-index: 1; /* 确保在 Algolia 标识下方 */
+  z-index: 1;
   margin-top: 20px;
-  width: 100%; /* 确保结果区域占满宽度 */
+  width: 100%;
 }
 
+/* 其他样式保留 */
 .search-result-item {
   width: 100%; /* 确保每个结果项占满宽度 */
   padding: 24px; /* 增加内边距 */

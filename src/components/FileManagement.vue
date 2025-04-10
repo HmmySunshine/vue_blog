@@ -8,152 +8,257 @@
         placeholder="请输入文件名称"
         size="small"
         class="search-input"
-        
+        clearable
+        @keyup.enter="searchFiles"
       ></el-input>
-      <el-button type="primary" class="search-button" @click="searchFiles"
-        >搜索</el-button
-      >
+      <el-button type="primary" class="search-button" @click="searchFiles">搜索</el-button>
     </div>
+    
     <div class="upload-section">
       <h2>上传新文件</h2>
       <form @submit.prevent="uploadFile" class="upload-form">
         <div class="form-group">
           <label for="file">选择文件:</label>
-          <input
-            type="file"
-            id="file"
-            ref="fileInput"
-            required
-            @change="handleFileChange"
-          />
+          <div class="file-input-wrapper">
+            <el-upload
+              ref="upload"
+              action=""
+              :auto-upload="false"
+              :on-change="handleFileChange"
+              :on-exceed="handleExceed"
+              :before-remove="handleBeforeRemove"
+              :limit="1"
+              :file-list="fileList"
+              class="custom-upload"
+              :show-file-list="true"
+            >
+              <el-button size="small" type="primary">选择文件</el-button>
+              <div slot="tip" class="el-upload__tip">
+                文件大小不能超过100MB，支持常见的文档、图片、压缩包等格式
+              </div>
+            </el-upload>
+          </div>
+          <div v-if="fileError" class="file-error">{{ fileError }}</div>
         </div>
         <div class="form-group">
           <label for="description">描述:</label>
-          <textarea
-            id="description"
+          <el-input
+            type="textarea"
+            :rows="3"
             v-model="newFile.description"
-            rows="3"
-          ></textarea>
+            placeholder="请输入文件描述（可选）"
+          ></el-input>
         </div>
-        <button type="submit" class="upload-button" :disabled="isUploading">
+        <el-button 
+          type="primary" 
+          @click="uploadFile" 
+          :loading="isUploading" 
+          :disabled="!canUpload || isUploading"
+          class="upload-button"
+        >
           {{ isUploading ? "文件上传中..." : "上传文件" }}
-        </button>
+        </el-button>
       </form>
     </div>
+    
     <div class="file-list">
       <h2>上传的文件列表</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>文件名称</th>
-            <th>文件类型</th>
-            <th>文件大小</th>
-            <th>文件下载次数</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="file in files" :key="file.id">
-            <td>{{ file.fileName }}</td>
-            <td>{{ file.fileType }}</td>
-            <td>{{ formatFileSize(file.fileSize) }}</td>
-            <td>{{ file.downloads }}</td>
-            <td>
-              <button @click="deleteFile(file.id)" class="delete-button">
-                Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <el-table
+        :data="files"
+        stripe
+        style="width: 100%"
+        v-loading="isLoading"
+      >
+        <el-table-column prop="fileName" label="文件名称" min-width="200">
+          <template slot-scope="scope">
+            <div class="file-name">
+              <i :class="getFileIcon(scope.row.fileType)"></i>
+              <span>{{ scope.row.fileName }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="fileType" label="文件类型" min-width="120"></el-table-column>
+        <el-table-column label="文件大小" min-width="100">
+          <template slot-scope="scope">
+            {{ formatFileSize(scope.row.fileSize) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="downloads" label="下载次数" min-width="100"></el-table-column>
+        <el-table-column label="操作" min-width="120" align="center">
+          <template slot-scope="scope">
+            <el-button
+              @click="handleDownload(scope.row)"
+              type="text"
+              size="small"
+            >
+              <i class="el-icon-download"></i> 下载
+            </el-button>
+            <el-button
+              @click="deleteFile(scope.row.id)"
+              type="text"
+              size="small"
+              class="delete-action"
+            >
+              <i class="el-icon-delete"></i> 删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <div class="no-data" v-if="files.length === 0 && !isLoading">
+        <i class="el-icon-document"></i>
+        <p>暂无文件</p>
+      </div>
     </div>
+    
     <div class="pagination-container">
       <el-pagination
-        small
-        layout="prev, pager, next"
+        layout="total, prev, pager, next"
         :current-page.sync="currentPage"
         :page-size="pageSize"
         :total="totoal"
         @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-        class="centered-pagination"
       >
       </el-pagination>
     </div>
   </div>
 </template>
   
-  <script>
+<script>
 import axios from "axios";
-//   import 'element-ui/lib/theme-chalk/index.css';
 
 export default {
   data() {
     return {
       files: [],
+      fileList: [],
       newFile: {
         file: null,
         description: "",
       },
       isUploading: false,
+      isLoading: false,
+      fileError: '',
       totoal: 0,
       currentPage: 1,
       pageSize: 5,
-      inputValue: ''
+      inputValue: '',
+      allowedTypes: [
+        // 文档格式
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain',
+        // 图片格式
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/svg+xml',
+        // 压缩包
+        'application/zip',
+        'application/x-rar-compressed',
+        'application/x-7z-compressed',
+        // 其他常用格式
+        'application/json',
+        'text/csv',
+        'text/html',
+        'text/xml'
+      ],
+      MAX_SIZE: 100 * 1024 * 1024 // 100MB
     };
+  },
+  computed: {
+    canUpload() {
+      return this.newFile.file && !this.fileError;
+    }
   },
   mounted() {
     this.fetchFiles();
   },
   methods: {
     async searchFiles() {
-        this.fetchFiles();
+      this.currentPage = 1;
+      this.fetchFiles();
     },
 
     async fetchFiles() {
       try {
-        //const windowsUrl = "http://localhost:8090/api/files/getAllFiles";
-        //const linuxUrl = "api/files/getAllFiles";
+        this.isLoading = true;
         const response = await axios.get(
           `${this.$baseUrl}/api/files/getAllFiles`,
           {
             params: {
-              page: this.currentPage,
+              page: this.currentPage - 1, // 后端接口从0开始计数
               pageSize: this.pageSize,
               keyword: this.inputValue,
             },
           }
         );
-        this.files = response.data.data.pageList; // 假设返回的数据结构中包含一个名为 "files" 的数组
-        this.totoal = response.data.data.total;
+        
+        if (response.data.code === 200) {
+          this.files = response.data.data.pageList || [];
+          this.totoal = response.data.data.total || 0;
+        } else {
+          this.$message.error('获取文件列表失败: ' + response.data.message);
+        }
       } catch (error) {
         console.error("Error fetching files:", error);
+        this.$message.error('获取文件列表失败，请稍后重试');
+      } finally {
+        this.isLoading = false;
       }
     },
     
-    handleFileChange(event) {
-      this.newFile.file = event.target.files[0];
+    handleFileChange(file) {
+      // 检查文件是否已存在
+      this.fileList = [file];
+      this.fileError = '';
+      
+      // 检查文件大小
+      if (file.size > this.MAX_SIZE) {
+        this.fileError = `文件大小超过限制，最大允许${this.formatFileSize(this.MAX_SIZE)}`;
+        return false;
+      }
+      
+      // 检查文件类型
+      if (!this.allowedTypes.includes(file.raw.type)) {
+        this.fileError = '不支持的文件类型';
+        return false;
+      }
+      
+      this.newFile.file = file.raw;
+      return true;
     },
+    
+    handleExceed() {
+      this.$message.warning('只能上传一个文件');
+    },
+    
+    handleBeforeRemove() {
+      this.newFile.file = null;
+      this.fileError = '';
+      return true;
+    },
+    
     handlePageChange(page) {
       this.currentPage = page;
       this.fetchFiles();
     },
-    handleSizeChange(size) {
-      this.pageSize = size;
-      this.fetchFiles();
-    },
 
     async uploadFile() {
-      if (!this.newFile.file) return;
-      const MAX_SIZE = 100 * 1024 * 1024; // 100MB
-      if (this.newFile.file.size > MAX_SIZE) {
-        alert("文件大小不能超过 100MB");
+      if (!this.newFile.file || this.fileError) {
+        this.$message.error('请选择有效文件');
         return;
       }
+      
       this.isUploading = true;
       const formData = new FormData();
       formData.append("file", this.newFile.file);
-      formData.append("description", this.newFile.description);
+      formData.append("description", this.newFile.description || '');
 
       try {
         const response = await axios.post(
@@ -162,38 +267,95 @@ export default {
           {
             headers: {
               "Content-Type": "multipart/form-data",
-            },
+            }
           }
         );
-        if (response.data.code == 200) {
-          alert("文件上传成功！");
+        
+        if (response.data.code === 200) {
+          this.$message.success('文件上传成功！');
           this.fetchFiles();
+          
+          // 重置表单
+          this.newFile.file = null;
+          this.newFile.description = "";
+          this.fileList = [];
+          this.fileError = '';
+        } else {
+          this.$message.error('上传失败: ' + response.data.message);
         }
-
-        this.newFile.file = null;
-        this.newFile.description = "";
-        this.$refs.fileInput.value = "";
       } catch (error) {
         console.error("Error uploading file:", error);
+        this.$message.error('文件上传失败，请稍后重试');
       } finally {
         this.isUploading = false;
       }
     },
-    async deleteFile(fileId) {
-      if (!confirm("Are you sure you want to delete this file?")) return;
-
+    
+    async handleDownload(file) {
       try {
-        const response = await axios.delete(
-          `${this.$baseUrl}/api/files/${fileId}`
-        );
-        if (response.data.code == 200) {
-          alert("文件删除成功！");
-          this.fetchFiles();
-        }
+        const response = await axios.get(`${this.$baseUrl}/api/files/download/${file.id}`, {
+          responseType: 'blob'
+        });
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', file.fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        // 更新下载计数
+        this.updateDownloadCount(file.id);
       } catch (error) {
-        console.error("Error deleting file:", error);
+        console.error("Error downloading file:", error);
+        this.$message.error('文件下载失败，请稍后重试');
       }
     },
+    
+    async updateDownloadCount(fileId) {
+      try {
+        await axios.put(`${this.$baseUrl}/api/files/updateDownloadsCount/${fileId}`);
+        // 更新当前列表中的下载计数
+        const index = this.files.findIndex(f => f.id === fileId);
+        if (index !== -1) {
+          this.files[index].downloads += 1;
+        }
+      } catch (error) {
+        console.error("Error updating download count:", error);
+      }
+    },
+    
+    async deleteFile(fileId) {
+      this.$confirm('确定要删除此文件吗？删除后将无法恢复。', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const response = await axios.delete(
+            `${this.$baseUrl}/api/files/${fileId}`
+          );
+          
+          if (response.data.code === 200) {
+            this.$message.success('文件删除成功！');
+            
+            // 如果当前页只有这一条数据，且不是第一页，则回到上一页
+            if (this.files.length === 1 && this.currentPage > 1) {
+              this.currentPage -= 1;
+            }
+            
+            this.fetchFiles();
+          } else {
+            this.$message.error('删除失败: ' + response.data.message);
+          }
+        } catch (error) {
+          console.error("Error deleting file:", error);
+          this.$message.error('文件删除失败，请稍后重试');
+        }
+      }).catch(() => {});
+    },
+    
     formatFileSize(size) {
       const units = ["B", "KB", "MB", "GB"];
       let i = 0;
@@ -203,21 +365,40 @@ export default {
       }
       return `${size.toFixed(2)} ${units[i]}`;
     },
+    
+    getFileIcon(fileType) {
+      const iconMap = {
+        'application/pdf': 'el-icon-document',
+        'application/msword': 'el-icon-document',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'el-icon-document',
+        'application/vnd.ms-excel': 'el-icon-tickets',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'el-icon-tickets',
+        'application/vnd.ms-powerpoint': 'el-icon-document',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'el-icon-document',
+        'text/plain': 'el-icon-document',
+        'image/jpeg': 'el-icon-picture',
+        'image/png': 'el-icon-picture',
+        'image/gif': 'el-icon-picture',
+        'application/zip': 'el-icon-folder',
+        'application/x-rar-compressed': 'el-icon-folder',
+        'application/x-7z-compressed': 'el-icon-folder'
+      };
+      
+      return iconMap[fileType] || 'el-icon-document';
+    }
   },
 };
 </script>
   
-  <style scoped>
+<style scoped>
 .file-management-page {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica",
-    "Arial", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica", "Arial", sans-serif;
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
 
-h1,
-h2 {
+h1, h2 {
   font-weight: 600;
   color: #1d1d1f;
 }
@@ -230,6 +411,18 @@ h1 {
 h2 {
   font-size: 24px;
   margin-bottom: 15px;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
 }
 
 .upload-section {
@@ -249,12 +442,6 @@ h2 {
   display: flex;
   flex-direction: column;
 }
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 20px 0; /* 可根据需要调整 */
-}
 
 label {
   font-size: 14px;
@@ -263,89 +450,64 @@ label {
   color: #1d1d1f;
 }
 
-input[type="file"],
-textarea {
-  font-size: 14px;
-  padding: 10px;
-  border: 1px solid #d2d2d7;
-  border-radius: 5px;
-  background-color: white;
+.file-input-wrapper {
+  margin-bottom: 5px;
 }
 
-textarea {
-  resize: vertical;
+.file-error {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-top: 5px;
 }
-tbody td {
-  color: #1d1d1f; /* 设置表格单元格文字颜色为深色 */
-  background-color: white; /* 设置背景为白色，保证对比度 */
+
+.custom-upload {
+  width: 100%;
 }
 
 .upload-button {
-  background-color: #0071e3;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
   align-self: flex-start;
+  margin-top: 10px;
 }
 
-.upload-button:hover:not(:disabled) {
-  background-color: #0077ed;
+.file-list {
+  margin-bottom: 20px;
 }
 
-.upload-button:disabled {
-  background-color: #999;
-  cursor: not-allowed;
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.file-name i {
+  font-size: 16px;
+  color: #409EFF;
+}
+
+.delete-action {
+  color: #f56c6c;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
   margin-top: 20px;
 }
 
-th,
-td {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid #d2d2d7;
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #909399;
 }
 
-th {
-  font-weight: 600;
-  color: #1d1d1f;
-  background-color: #f5f5f7;
+.no-data i {
+  font-size: 48px;
+  margin-bottom: 10px;
 }
 
-.delete-button {
-  background-color: #ff3b30;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+.el-upload__tip {
+  color: #909399;
   font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.delete-button:hover {
-  background-color: #ff453a;
-}
-.search-container {
-  display: flex;
-  align-items: center;
-  gap: 10px; /* 控制输入框和按钮之间的间距 */
-}
-
-.search-input {
-  width: 200px; /* 设置输入框的宽度 */
-}
-
-.search-button {
-  padding: 5px 15px; /* 设置按钮的内边距 */
+  margin-top: 7px;
 }
 </style>

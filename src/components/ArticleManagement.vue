@@ -303,7 +303,7 @@
             cancelButtonText: '取消',
             type: 'warning'
           });
-          await axios.delete(`${this.$baseUrl}/api/articles/${id}`);
+          await axios.delete(`${this.$baseUrl}/api/articles/delete/${id}`);
           Message.success('删除成功');
           await this.fetchArticles();
         } catch (error) {

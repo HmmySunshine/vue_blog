@@ -5,7 +5,9 @@
         <el-input  
           v-model="searchQuery"  
           placeholder="搜索分类"  
-          class="search-input"  
+          class="search-input"
+          clearable
+          @keyup.enter="fetchCategories"
         ></el-input>  
         <el-button type="primary" @click="fetchCategories" class="search-button">  
           搜索  
@@ -15,7 +17,9 @@
         <el-input  
           v-model="newCategory"  
           placeholder="添加新分类"  
-          class="add-input"  
+          class="add-input"
+          clearable
+          @keyup.enter="addCategory"
         ></el-input>  
         <el-button type="primary" @click="addCategory" class="add-button">  
           添加  
@@ -62,7 +66,6 @@
       </div>  
       <div class="pagination">  
         <el-pagination  
-          
           :current-page="currentPage"  
           :page-size="pageSize"  
           :total="totalItems"  
@@ -78,7 +81,7 @@
         >  
           <el-alert  
             :title="responseMsg"  
-            type="success"  
+            :type="responseType"
             effect="dark"  
             show-icon  
             :closable="false"  
@@ -100,9 +103,10 @@
         categories: [],  
         totalItems: 0,  
         currentPage: 1,  
-        pageSize: 10,  
+        pageSize: 5,  
         responseMsg: '',  
-        responseFlag: false,  
+        responseFlag: false,
+        responseType: 'success',
       };  
     },  
     created() {  
@@ -118,12 +122,17 @@
               pageSize: this.pageSize,  
             },  
           });  
-          this.categories = response.data.data.categories.map((category) => ({  
-            ...category,  
-            editing: false,  
-            editName: category.name,  
-          }));  
-          this.totalItems = response.data.data.total;  
+          
+          if (response.data.code === 200) {
+            this.categories = response.data.data.categories.map((category) => ({  
+              ...category,  
+              editing: false,  
+              editName: category.name,  
+            }));  
+            this.totalItems = response.data.data.total;
+          } else {
+            this.showMessage('获取分类失败: ' + response.data.message, 'error');
+          }
         } catch (error) {  
           console.error('获取分类失败:', error);  
           this.showMessage('获取分类失败', 'error');  
@@ -134,18 +143,24 @@
           this.showMessage('分类名称不能为空', 'error');
           return;
         }
+        
         try {  
           const response = await axios.post(`${this.$baseUrl}/api/categories`, {  
             name: this.newCategory.trim(),  
           });  
-          this.showMessage(response.data.message, 'success');  
-  
-          this.categories.unshift({  
-            ...response.data.category,  
-            editing: false,  
-            editName: response.data.data.name
-          });  
-          this.newCategory = '';  
+          
+          if (response.data.code === 200) {
+            this.showMessage('分类添加成功', 'success');  
+            
+            // 添加成功后重新获取第一页数据
+            this.currentPage = 1;
+            await this.fetchCategories();
+            
+            // 清空添加框
+            this.newCategory = '';
+          } else {
+            this.showMessage('添加分类失败: ' + response.data.message, 'error');
+          }
         } catch (error) {  
           console.error('添加分类失败:', error);  
           this.showMessage('添加分类失败', 'error');  
@@ -155,15 +170,20 @@
         category.editing = true;  
         category.editName = category.name;  
       },  
-      showMessage(message) {  
-        this.responseMsg = message;  
+      showMessage(message, type = 'success') {  
+        this.responseMsg = message;
+        this.responseType = type;
         this.responseFlag = true;  
         setTimeout(() => {  
           this.responseFlag = false;  
         }, 3000);  
       },  
       async updateCategory(category) {  
-        if (!category.editName.trim()) return;  
+        if (!category.editName.trim()) {
+          this.showMessage('分类名称不能为空', 'error');
+          return;
+        }
+        
         try {  
           const response = await axios.put(  
             `${this.$baseUrl}/api/categories/${category.id}`,  
@@ -171,25 +191,47 @@
               name: category.editName.trim(),  
             }  
           );  
-          category.name = category.editName.trim();  
-          category.editing = false;  
-          this.showMessage(response.data.message, 'success');  
+          
+          if (response.data.code === 200) {
+            category.name = category.editName.trim();  
+            category.editing = false;  
+            this.showMessage('分类更新成功', 'success');
+          } else {
+            this.showMessage('更新分类失败: ' + response.data.message, 'error');
+          }
         } catch (error) {  
           console.error('更新分类失败:', error);  
           this.showMessage('更新分类失败', 'error');  
         }  
       },  
       async deleteCategory(id) {  
-        if (confirm('确定要删除这个分类吗？')) {  
+        this.$confirm('确定要删除这个分类吗？删除后将无法恢复。', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(async () => {
           try {  
             const response = await axios.delete(`${this.$baseUrl}/api/categories/${id}`);  
-            this.showMessage(response.data.message, 'success');  
-            this.fetchCategories();  
+            
+            if (response.data.code === 200) {
+              this.showMessage('分类删除成功', 'success');  
+              
+              // 如果当前页只有这一项，且不是第一页，则回到上一页
+              if (this.categories.length === 1 && this.currentPage > 1) {
+                this.currentPage--;
+              }
+              
+              await this.fetchCategories();
+            } else {
+              this.showMessage('删除分类失败: ' + response.data.message, 'error');
+            }
           } catch (error) {  
             console.error('删除分类失败:', error);  
             this.showMessage('删除分类失败', 'error');  
-          }  
-        }  
+          }
+        }).catch(() => {
+          // 取消删除操作
+        });
       },  
       handlePageChange(page) {  
         this.currentPage = page;  
@@ -200,8 +242,6 @@
   </script>  
   
   <style scoped>  
-
-  
   .category-management {  
     max-width: 800px;  
     margin: 0 auto;  
@@ -269,6 +309,7 @@
     flex-direction: column;  
     gap: 15px;  
     margin-bottom: 30px;  
+    min-height: 200px; /* 确保有最小高度，防止加载时页面跳动 */
   }  
   
   .category-item {  

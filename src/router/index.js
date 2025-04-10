@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import AdminDashboard from '../components/AdminDashboard.vue'
-import LoginTest from '../components/LoginTest.vue'
+import LoginView from '@/views/LoginView.vue'
 import TestChat from '@/components/TestChat.vue'
 // 替换旧的 RegisterTest 引入
 import RegisterView from '@/views/RegisterView.vue'
@@ -24,9 +24,9 @@ const routes = [
   }
   ,
   {
-	path: '/login',
-	name: 'Login',
-	component: LoginTest
+    path: '/login',
+    name: 'Login',
+    component: LoginView
   },
   {
     path:'/find',
