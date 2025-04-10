@@ -86,14 +86,8 @@
     },
     methods: {
       async fetchFiles() {
-        // if (!localStorage.getItem("token")) {
-        //   this.$message.error("请先登录");
-        //   this.$router.push("/login");
-        //   return;
-        // }
-  
-        const token = localStorage.getItem("token");
         try {
+          // 移除登录检查,允许未登录用户查看文件列表
           const response = await axios.get(
             `${this.$baseUrl}/api/files/getAllFiles`,
             {
@@ -102,30 +96,17 @@
                 pageSize: this.pageSize,
                 keyword: this.searchKeyword,
               },
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
               timeout: 5000,
             }
           );
-          if (response.status === 401) {
-            this.$message.error("登录已过期，请重新登录");
-            this.$router.push("/login");
-            return;
-          }
   
           if (response.data.code === 200 && response.data.data) {
             this.files = response.data.data.pageList;
             this.total = response.data.data.total;
-          } else {
-            console.error("Unexpected response structure:", response.data);
           }
         } catch (error) {
-          console.error(
-            "Request failed with status code:",
-            error.response ? error.response.status : "No response received"
-          );
-          this.$message.error("请求失败，请稍后再试");
+          console.error("获取文件列表失败:", error);
+          this.$message.error("获取文件列表失败，请稍后再试");
         }
       },
       getFileIcon(fileType) {
@@ -170,8 +151,16 @@
       async downloadFile(file) {
         const token = localStorage.getItem("token");
         if (!token) {
-          this.$message.error("请先登录");
-          this.$router.push("/login");
+          // 使用 Element UI 的 MessageBox 显示更友好的提示
+          this.$confirm('下载文件需要登录, 是否立即登录?', '提示', {
+            confirmButtonText: '去登录',
+            cancelButtonText: '取消',
+            type: 'info'
+          }).then(() => {
+            // 保存当前页面路径
+            localStorage.setItem('redirectPath', this.$route.fullPath);
+            this.$router.push('/login');
+          }).catch(() => {});
           return;
         }
   
@@ -195,7 +184,11 @@
           this.$message.success("文件下载成功");
           await this.upDateDownloadsCount(file.id);
         } catch (error) {
-          console.error("Error downloading file:", error);
+          if (error.response && error.response.status === 401) {
+            this.$message.error("登录已过期，请重新登录");
+            this.$router.push("/login");
+            return;
+          }
           this.$message.error("文件下载失败，请稍后重试");
         }
       },
@@ -351,5 +344,27 @@
     .file-item {
       grid-template-columns: 2fr 1fr 80px;
     }
+  }
+
+  /* 可以添加一些视觉提示,表明需要登录才能下载 */
+  .file-actions-col .el-button {
+    position: relative;
+  }
+  
+  .file-actions-col .el-button:not(:hover)::after {
+    content: '登录后下载';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #909399;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .file-actions-col .el-button:hover::after {
+    opacity: 1;
   }
   </style>

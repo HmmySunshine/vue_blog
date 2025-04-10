@@ -2,113 +2,109 @@
   <div id="admin-app">
     <nav class="admin-sidebar">
       <div class="admin-sidebar-brand">博客后台管理</div>
-      <div class="admin-sidebar-menu">
-        <a
-          @click="setActiveView('dashboard')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'dashboard' }"
-        >
-          <i class="fas fa-tachometer-alt"></i> 仪表盘
-        </a>
-        <a
-          @click="setActiveView('publishArticle')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'publishArticle' }"
-        >
-          <i class="fas fa-bullhorn"></i> 发布文章
-        </a>
-        <a
-          @click="setActiveView('articleManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'articleManagement' }"
-        >
-          <i class="fas fa-book"></i> 文章管理
-        </a>
-        <a
-          @click="setActiveView('tagManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'tagManagement' }"
-        >
-          <i class="fas fa-tags"></i> 标签管理
-        </a>
-        <a
-          @click="setActiveView('categoryManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'categoryManagement' }"
-        >
-          <i class="fas fa-th-large"></i> 分类管理
-        </a>
-        <a
-          @click="setActiveView('timelineManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'timelineManagement' }"
-        >
-          <i class="fas fa-clock"></i> 时光轴管理
-        </a>
-        <a
-          @click="setActiveView('alistManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'alistManagement' }"
-        >
-          <i class="fas fa-file"></i> Alist管理
-        </a>
-        <a
-          @click="setActiveView('chatSettings')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'chatSettings' }"
-        >
-          <i class="fas fa-comments"></i> AI聊天室设置
-        </a>
-        <a
-          @click="setActiveView('photoWallManagement')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'photoWallManagement' }"
-        >
-          <i class="fas fa-images"></i> 照片墙管理
-        </a>
-        <a
-          @click="setActiveView('systemSettings')"
-          class="admin-navbar-item"
-          :class="{ active: activeView === 'systemSettings' }"
-        >
-          <i class="fas fa-cog"></i> 系统设置
-        </a>
-        <a @click="logout" class="admin-navbar-item">
-          <i class="fas fa-sign-out-alt"></i> 回到博客首页
-        </a>
-      </div>
+      <el-menu
+        class="admin-sidebar-menu"
+        :default-active="activeView"
+        @select="setActiveView"
+        background-color="#ffffff"
+        text-color="#333"
+        active-text-color="#409EFF"
+        unique-opened
+      >
+        <el-menu-item index="dashboard">
+            
+          <i class="fas fa-tachometer-alt"></i>
+          <span>仪表盘</span>
+        </el-menu-item>
+        <el-menu-item index="publishArticle">
+          <i class="fas fa-bullhorn"></i>
+          <span>发布文章</span>
+        </el-menu-item>
+        <el-menu-item index="articleManagement">
+          <i class="fas fa-book"></i>
+          <span>文章管理</span>
+        </el-menu-item>
+        <el-menu-item index="tagManagement">
+          <i class="fas fa-tags"></i>
+          <span>标签管理</span>
+        </el-menu-item>
+        <el-menu-item index="categoryManagement">
+          <i class="fas fa-th-large"></i>
+          <span>分类管理</span>
+        </el-menu-item>
+        <el-menu-item index="alistManagement">
+          <i class="fas fa-file"></i>
+          <span>Alist管理</span>
+        </el-menu-item>
+        <el-menu-item index="photoWallManagement">
+          <i class="fas fa-images"></i>
+          <span>照片墙管理</span>
+        </el-menu-item>
+        <el-menu-item index="systemSettings">
+          <i class="fas fa-cog"></i>
+          <span>系统设置</span>
+        </el-menu-item>
+        <el-menu-item index="home" @click="logout">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>回到博客首页</span>
+        </el-menu-item>
+      </el-menu>
     </nav>
     <div class="admin-main-content">
       <template v-if="activeView === 'dashboard'">
         <div class="stats-grid">
           <div class="stat-card">
-            <h3>文章总数</h3>
-            <div class="stat-number">{{ totalArticles }}</div>
+            <div class="stat-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-info">
+              <h3>文章总数</h3>
+              <div class="stat-number">{{ totalArticles }}</div>
+            </div>
           </div>
           <div class="stat-card">
-            <h3>总访问量</h3>
-            <div class="stat-number">{{ totalVisits }}</div>
+            <div class="stat-icon">
+              <i class="fas fa-eye"></i>
+            </div>
+            <div class="stat-info">
+              <h3>总访问量</h3>
+              <div class="stat-number">{{ totalVisits }}</div>
+            </div>
           </div>
           <div class="stat-card">
-            <h3>评论总数</h3>
-            <div class="stat-number">{{ totalComments }}</div>
+            <div class="stat-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+            <div class="stat-info">
+              <h3>评论总数</h3>
+              <div class="stat-number">{{ totalComments }}</div>
+            </div>
           </div>
           <div class="stat-card">
-            <h3>分类总数</h3>
-            <div class="stat-number">{{ totalCategories }}</div>
+            <div class="stat-icon">
+              <i class="fas fa-folder"></i>
+            </div>
+            <div class="stat-info">
+              <h3>分类总数</h3>
+              <div class="stat-number">{{ totalCategories }}</div>
+            </div>
           </div>
         </div>
-        <div class="chart-grid">
-          <div class="chart-card">
-            <h3>访问统计</h3>
-            <canvas ref="visitsChart"></canvas>
-          </div>
-          <div class="chart-card">
-            <h3>分类统计</h3>
-            <canvas ref="categoriesChart"></canvas>
+        
+        <div class="charts-container">
+          <div class="chart-row">
+            <div class="chart-card">
+              <h3>文章分类占比</h3>
+              <v-chart :options="categoryOptions" autoresize />
+            </div>
+            <div class="chart-card">
+              <h3>热门文章 TOP5</h3>
+              <v-chart :options="hotArticlesOptions" autoresize />
+            </div>
           </div>
         </div>
       </template>
+     
       <ArticleEditor v-else-if="activeView === 'publishArticle'" />
       <ArticleManagement v-else-if="activeView === 'articleManagement'" />
       <TagManagement v-else-if="activeView === 'tagManagement'" />
@@ -116,15 +112,23 @@
       <FileManagement v-else-if="activeView === 'alistManagement'" />
       <PhotoWallManagement v-else-if="activeView === 'photoWallManagement'" />
       <TestManagement v-else-if="activeView === 'systemSettings'" />
+    
       <div v-else class="placeholder-content">
         {{ activeView }} 功能正在开发中...
       </div>
     </div>
   </div>
 </template>
-  
-  <script>
-import Chart from "chart.js/auto";
+
+<script>
+import axios from 'axios';
+import ECharts from 'vue-echarts';
+import 'echarts/lib/chart/line';
+import 'echarts/lib/chart/pie';
+import 'echarts/lib/chart/bar';
+import 'echarts/lib/component/tooltip';
+import 'echarts/lib/component/legend';
+import 'echarts/lib/component/title';
 import ArticleEditor from "./ArticleEditor.vue";
 import ArticleManagement from "./ArticleManagement.vue";
 import TagManagement from "./TagManagement.vue";
@@ -132,6 +136,7 @@ import CategoryManagement from "./CategoryManagement.vue";
 import FileManagement from "./FileManagement.vue";
 import PhotoWallManagement from "./PhotoWallManagement.vue";
 import TestManagement from "./TestManagement.vue";
+
 export default {
   name: "AdminDashboard",
   components: {
@@ -142,146 +147,161 @@ export default {
     FileManagement,
     PhotoWallManagement,
     TestManagement,
+    'v-chart': ECharts
   },
   data() {
     return {
       activeView: "dashboard",
-      totalArticles: 150,
-      totalVisits: 10000,
-      totalComments: 500,
-      totalCategories: 8,
-      visitsChart: null,
-      categoriesChart: null,
-      visitData: Array.from(
-        { length: 30 },
-        () => Math.floor(Math.random() * 100) + 50
-      ),
-      categoryData: [30, 25, 20, 15, 5, 5],
+      totalArticles: 0,
+      totalVisits: 0,
+      totalComments: 0,
+      totalCategories: 0,
+      categoryOptions: {
+        tooltip: { 
+          trigger: 'item',
+          formatter: '{b}: {c} ({d}%)' 
+        },
+        legend: { 
+          orient: 'vertical',
+          right: 10,
+          top: 'center'
+        },
+        series: [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['40%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: { 
+            borderRadius: 10,
+            borderColor: '#fff',
+            borderWidth: 2
+          },
+          label: { 
+            show: true,
+            formatter: '{b}: {c}'
+          },
+          data: []
+        }]
+      },
+      hotArticlesOptions: {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          boundaryGap: [0, 0.01]
+        },
+        yAxis: {
+          type: 'category',
+          data: [],
+          axisLabel: {
+            interval: 0,
+            formatter: function (value) {
+              if (value.length > 8) {
+                return value.substring(0, 8) + '...';
+              }
+              return value;
+            }
+          }
+        },
+        series: [{
+          name: '访问量',
+          type: 'bar',
+          data: [],
+          itemStyle: {
+            color: '#409EFF'
+          }
+        }]
+      }
     };
   },
-  mounted() {
-    this.$nextTick(() => {
-      if (this.activeView === "dashboard") {
-        this.createVisitsChart();
-        this.createCategoriesChart();
-      }
-      window.addEventListener("resize", this.resizeCharts);
-    });
-  },
-  beforeDestroy() {
-    if (this.visitsChart) {
-      this.visitsChart.destroy();
-    }
-    if (this.categoriesChart) {
-      this.categoriesChart.destroy();
-    }
-    window.removeEventListener("resize", this.resizeCharts);
-  },
   methods: {
-    setActiveView(view) {
-      this.activeView = view;
-      if (view === "dashboard") {
-        this.$nextTick(() => {
-          this.createVisitsChart();
-          this.createCategoriesChart();
-        });
-      }
-    },
-    createVisitsChart() {
-      const ctx = this.$refs.visitsChart.getContext("2d");
-      if (this.visitsChart) {
-        this.visitsChart.destroy();
-      }
-      this.visitsChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-          datasets: [
-            {
-              label: "访问量",
-              data: this.visitData,
-              borderColor: "rgb(75, 192, 192)",
-              tension: 0.1,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          aspectRatio: 2,
-          animation: {
-            duration: 0,
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
-          },
-        },
-      });
-    },
-    createCategoriesChart() {
-      const ctx = this.$refs.categoriesChart.getContext("2d");
-      if (this.categoriesChart) {
-        this.categoriesChart.destroy();
-      }
-      this.categoriesChart = new Chart(ctx, {
-        type: "pie",
-        data: {
-          labels: ["Java", "Python", "前端", "PHP", "Go", "其他"],
-          datasets: [
-            {
-              data: this.categoryData,
-              backgroundColor: [
-                "rgba(255, 99, 132, 0.8)",
-                "rgba(54, 162, 235, 0.8)",
-                "rgba(255, 206, 86, 0.8)",
-                "rgba(75, 192, 192, 0.8)",
-                "rgba(153, 102, 255, 0.8)",
-                "rgba(255, 159, 64, 0.8)",
-              ],
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          aspectRatio: 2,
-          animation: {
-            duration: 0,
-          },
-        },
-      });
-    },
-    resizeCharts() {
-      if (this.visitsChart) {
-        this.visitsChart.resize();
-      }
-      if (this.categoriesChart) {
-        this.categoriesChart.resize();
-      }
+    setActiveView(index) {
+      this.activeView = index;
+      console.log(this.activeView);
     },
     logout() {
-      
-      this.$router.push("/");
+      this.$router.push('/');
     },
-  },
-  watch: {
-    activeView(newView) {
-      if (newView === "dashboard") {
-        this.$nextTick(() => {
-          this.createVisitsChart();
-          this.createCategoriesChart();
-        });
+    async fetchDashboardData() {
+      try {
+        // 获取文章总数
+        const articlesResponse = await axios.get(`${this.$baseUrl}/api/articles/counts`);
+        if (articlesResponse.data.code === 200) {
+          this.totalArticles = articlesResponse.data.data;
+        }
+
+        // 获取访问量
+        const visitsResponse = await axios.get(`${this.$baseUrl}/api/totalVisitCount`);
+        if (visitsResponse.data.code === 200) {
+          this.totalVisits = visitsResponse.data.data;
+        }
+
+        // 获取评论数
+        const commentsResponse = await axios.get(`${this.$baseUrl}/api/comments/counts`);
+        if (commentsResponse.data.code === 200) {
+          this.totalComments = commentsResponse.data.data;
+        }
+
+        // 获取分类数
+        const categoriesResponse = await axios.get(`${this.$baseUrl}/api/categories/total`);
+        if (categoriesResponse.data.code === 200) {
+          this.totalCategories = categoriesResponse.data.data;
+        }
+
+        // 获取分类数据和名称
+        const categoriesListResponse = await axios.get(`${this.$baseUrl}/api/categories`);
+        if (categoriesListResponse.data.code === 200) {
+          
+          const categoryCountsResponse = await axios.get(`${this.$baseUrl}/api/categories/counts`);
+          const categoryData = categoryCountsResponse.data.data;
+          
+          const categoryDistribution = await Promise.all(
+            Object.entries(categoryData).map(async ([id, count]) => {
+              const categoryNameResponse = await axios.get(`${this.$baseUrl}/api/categories/name/${id}`);
+              let name = categoryNameResponse.data.code === 200 ? categoryNameResponse.data.data : `分类${id}`;
+              if (name == null) name = "未分类"
+              return { value: count, name: name };
+            })
+          );
+          
+          this.categoryOptions.series[0].data = categoryDistribution;
+        }
+
+        // 获取热门文章数据
+        const statsResponse = await axios.get(`${this.$baseUrl}/api/stats`);
+        if (statsResponse.data) {
+          // 获取前5篇热门文章并排序
+          const top5Articles = statsResponse.data.popularArticles
+            .sort((a, b) => b.views - a.views)
+            .slice(0, 5);
+            
+          this.hotArticlesOptions.yAxis.data = top5Articles.map(article => article.title);
+          this.hotArticlesOptions.series[0].data = top5Articles.map(article => article.views);
+        }
+      } catch (error) {
+        console.error('获取仪表盘数据失败:', error);
+        this.$message.error('获取数据失败');
       }
-    },
+    }
   },
+  mounted() {
+    this.fetchDashboardData();
+  }
 };
 </script>
-  
-  <style scoped>
-html,
-body {
+
+<style scoped>
+html, body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -292,19 +312,11 @@ body {
   display: flex;
   height: 100vh;
   font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 .admin-sidebar {
   width: 250px;
-  background-color: #343a40;
-  color: white;
+  background-color: #ffffff;
   padding: 1rem;
   overflow-y: auto;
   flex-shrink: 0;
@@ -318,38 +330,27 @@ body {
   text-align: center;
 }
 
-.admin-sidebar-menu {
-  display: flex;
-  flex-direction: column;
+.admin-sidebar .el-menu {
+  border-right: none;
 }
 
-.admin-navbar-item {
-  margin-bottom: 0.5rem;
-  text-decoration: none;
-  color: #f8f9fa;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+.admin-sidebar .el-menu-item {
+  color: #333;
 }
 
-.admin-navbar-item:hover,
-.admin-navbar-item.active {
-  background-color: #495057;
+.admin-sidebar .el-menu-item:hover,
+.admin-sidebar .el-menu-item.is-active {
+  background-color: #f5f5f5;
 }
 
-.admin-navbar-item i {
+.admin-sidebar .el-menu-item i {
+  color: #409EFF;
   margin-right: 0.5rem;
-  width: 20px;
-  text-align: center;
 }
 
 .admin-main-content {
   flex-grow: 1;
   padding: 0;
-  overflow-y: auto;
   background-color: #f8f9fa;
   height: 100%;
 }
@@ -358,48 +359,48 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  padding: 1rem;
-  margin: 0;
 }
 
 .stat-card {
-  background-color: #fff;
+  background: #fff;
   border-radius: 8px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.stat-card h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  color: #666;
+.stat-card .stat-icon {
+  font-size: 24px;
+  margin-right: 1rem;
 }
 
-.stat-number {
-  font-size: 1.5rem;
+.stat-card .stat-number {
+  font-size: 24px;
   font-weight: bold;
-  color: #333;
 }
 
-.chart-grid {
+.charts-container {
+  padding: 1rem;
+}
+
+.chart-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  padding: 0 1rem 1rem 1rem;
-  margin: 0;
 }
 
 .chart-card {
-  background-color: #fff;
+  background: #fff;
   border-radius: 8px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  height: 400px;
 }
 
 .chart-card h3 {
   margin: 0 0 1rem 0;
-  font-size: 1.125rem;
-  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
 }
 
 .placeholder-content {
@@ -409,12 +410,5 @@ body {
   height: 100%;
   font-size: 1.2rem;
   color: #666;
-  padding: 1rem;
-}
-
-canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-height: 400px;
 }
 </style>

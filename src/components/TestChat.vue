@@ -62,7 +62,11 @@
             {{ message.content }}
           </template>
           <template v-else>
-            <span v-html="message.content" charset="UTF-8"></span>
+            <!-- 当消息完成时使用Markdown渲染，否则保持原始文本 -->
+            <span v-if="index === currentChat.messages.length - 1 && isLoading" 
+                  v-html="message.content" charset="UTF-8"></span>
+            <span v-else
+                  v-html="renderMarkdown(message.content)" charset="UTF-8"></span>
             <span
               v-if="index === currentChat.messages.length - 1 && isLoading"
               class="cursor"
@@ -101,8 +105,11 @@
     </div>
   </div>
 </template>
-
+  
 <script>
+// 在script标签顶部添加import
+import marked from 'marked'; // 导入marked库
+
 export default {
   data() {
     return {
@@ -126,7 +133,7 @@ export default {
 
     initWebSocket() {
       if (localStorage.getItem("token") == null) {
-        alert("请先登陆");
+        alert("请先登录");
         return;
       }
 
@@ -201,6 +208,7 @@ export default {
             this.currentChat.messages.length - 1
           ].content = content;
         } else {
+          // 显示原始文本，不应用Markdown（因为打字效果）
           this.typeMessage(content, this.currentChat.messages.length - 1);
         }
       } else {
@@ -216,6 +224,10 @@ export default {
           this.typeMessage(content, this.currentChat.messages.length - 1);
         }
       }
+    },
+    // 添加Markdown渲染方法
+    renderMarkdown(content) {
+      return content ? marked(content) : '';
     },
     //你好  有什么  可以  帮助  你的 吗？
     typeMessage(content, index) {
@@ -300,20 +312,117 @@ export default {
   },
 };
 </script>
+  
+  <style scoped>
+/* 添加以下样式到TestChat.vue的<style>部分最前面 */
+.chat-container {
+  display: flex !important; 
+  position: relative !important;
+  height: calc(100vh - 120px) !important;
+  flex: none !important; /* 覆盖App.vue中的flex: 1 */
+  max-height: calc(100vh - 120px) !important;
+}
 
-<style scoped>
+.main-chat {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important; 
+  overflow: hidden !important;
+}
+
+/* 确保输入框显示在底部 */
+.input-area {
+  position: absolute !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 75% !important;
+  max-width: 800px !important;
+  min-width: 300px !important;
+  z-index: 100 !important;
+  
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 18px !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+}
+
+.input-area:hover, .input-area:focus-within {
+  box-shadow: 0 5px 16px rgba(0, 122, 255, 0.12) !important;
+  border-color: rgba(0, 122, 255, 0.2) !important;
+  transform: translateX(-50%) translateY(-2px) !important;
+}
+
+.input-area input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 15px;
+  color: #333;
+  background-color: transparent;
+  border: none;
+}
+
+.input-area .send-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background-color: #007aff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+  box-shadow: 0 2px 5px rgba(0, 122, 255, 0.3);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .input-area {
+    width: 85% !important;
+    padding: 10px 16px !important;
+  }
+  
+  .input-area:hover, .input-area:focus-within {
+    transform: translateX(-50%) translateY(-1px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-area {
+    width: 90% !important;
+    min-width: auto !important;
+  }
+}
+
 /* 保持原有的样式不变 */
 .chat-container {
   display: flex;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 100px); /* 减去头部和底部的高度 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
   background-color: #ffffff;
   color: #1d1d1f;
+  margin-bottom: 60px; /* 为备案信息留出空间 */
+  margin: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar {
-  width: 250px;
+  min-width: 250px; /* 添加最小宽度 */
+  width: 250px; /* 固定宽度 */
+  flex-shrink: 0; /* 防止侧边栏收缩 */
   background-color: #f5f5f7;
   padding: 20px;
   border-right: 1px solid #d2d2d7;
@@ -349,6 +458,7 @@ export default {
   border-radius: 8px;
   transition: background-color 0.3s ease;
   cursor: pointer;
+  min-width: 210px; /* 设置最小宽度 */
 }
 
 .chat-item:hover {
@@ -364,6 +474,7 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   flex-grow: 1;
+  max-width: 180px; /* 限制最大宽度 */
 }
 
 .delete-btn {
@@ -405,26 +516,33 @@ export default {
 }
 
 .main-chat {
-  flex-grow: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  min-width: 600px; /* 添加最小宽度，防止过度收缩 */
+  position: relative;
 }
 
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
   padding: 20px;
+  padding-bottom: 80px; /* 为输入框留出空间 */
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
   margin-bottom: 15px;
   padding: 10px 15px;
   border-radius: 18px;
-  max-width: 70%;
+  max-width: 70%; /* 保持最大宽度 */
+  min-width: 200px; /* 添加最小宽度 */
   line-height: 1.4;
   word-wrap: break-word;
+  white-space: pre-wrap; /* 保持换行和空格 */
 }
 
 .user {
@@ -439,64 +557,220 @@ export default {
   color: #1d1d1f;
 }
 
+/* 修复输入区域 */
 .input-area {
-  display: flex;
-  background-color: #f5f5f7;
-  border-radius: 20px;
-  padding: 5px;
-  margin: 10px;
+  position: absolute !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 75% !important;
+  max-width: 800px !important;
+  min-width: 300px !important;
+  z-index: 100 !important;
+  
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 18px !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
 }
 
-input {
-  flex-grow: 1;
-  padding: 10px 15px;
-  font-size: 16px;
+.input-area:hover, .input-area:focus-within {
+  box-shadow: 0 5px 16px rgba(0, 122, 255, 0.12) !important;
+  border-color: rgba(0, 122, 255, 0.2) !important;
+  transform: translateX(-50%) translateY(-2px) !important;
+}
+
+.input-area input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 15px;
+  color: #333;
+  background-color: transparent;
   border: none;
-  background: transparent;
-  color: #1d1d1f;
 }
 
-input:focus {
-  outline: none;
-}
-
-.send-btn {
-  background: none;
-  border: none;
-  color: #007aff;
-  cursor: pointer;
-  padding: 10px;
+.input-area .send-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 50%;
-  transition: background-color 0.3s ease;
+  background-color: #007aff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+  box-shadow: 0 2px 5px rgba(0, 122, 255, 0.3);
 }
 
-.send-btn:hover {
-  background-color: #e8e8ed;
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .input-area {
+    width: 85% !important;
+    padding: 10px 16px !important;
+  }
+  
+  .input-area:hover, .input-area:focus-within {
+    transform: translateX(-50%) translateY(-1px) !important;
+  }
 }
 
-.send-btn:disabled {
-  color: #86868b;
-  cursor: not-allowed;
+@media (max-width: 480px) {
+  .input-area {
+    width: 90% !important;
+    min-width: auto !important;
+  }
 }
 
+/* 光标动画 */
 .cursor {
   display: inline-block;
-  width: 10px;
-  height: 20px;
-  background-color: #007aff;
-  animation: blink 0.7s infinite;
+  width: 8px;
+  height: 16px;
+  background-color: #333;
+  animation: blink 1s infinite;
+  margin-left: 2px;
   vertical-align: middle;
 }
 
 @keyframes blink {
-  0% {
-    opacity: 0;
-  }
-  50% {
+  0%,
+  100% {
     opacity: 1;
   }
-  100% {
+  50% {
     opacity: 0;
   }
 }
+
+/* 媒体查询，适应不同屏幕尺寸 */
+@media (max-width: 768px) {
+  .sidebar {
+    min-width: 200px;
+    width: 200px;
+  }
+
+  .chat-title {
+    max-width: 130px;
+  }
+
+  .chat-item {
+    min-width: 160px;
+  }
+
+  .chat-container {
+    margin: 10px;
+    height: calc(100vh - 120px);
+  }
+
+  .main-chat {
+    min-width: auto;
+  }
+}
+
+/* 防止外部下拉栏影响 */
+.chat-container {
+  position: relative !important;
+  z-index: 1 !important; /* 确保较低层级 */
+  isolation: isolate !important; /* 创建堆叠上下文 */
+}
+
+/* 修复与外部下拉栏的冲突 */
+:deep(.navbar-dropdown),
+:deep(.el-dropdown-menu) {
+  z-index: 2000 !important; /* 确保下拉菜单高于聊天容器 */
+}
+
+/* 添加Markdown样式支持 */
+.assistant :deep(pre) {
+  background-color: #f6f8fa !important;
+  padding: 16px !important;
+  border-radius: 6px !important;
+  overflow-x: auto !important;
+  margin: 10px 0 !important;
+}
+
+.assistant :deep(code) {
+  font-family: Consolas, Monaco, 'Andale Mono', monospace !important;
+  background-color: #f6f8fa !important;
+  padding: 3px 5px !important;
+  border-radius: 3px !important;
+  font-size: 0.9em !important;
+}
+
+.assistant :deep(p) {
+  margin: 10px 0 !important;
+}
+
+.assistant :deep(ul), 
+.assistant :deep(ol) {
+  padding-left: 20px !important;
+  margin: 10px 0 !important;
+}
+
+.assistant :deep(h1),
+.assistant :deep(h2),
+.assistant :deep(h3) {
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+}
+
+.assistant :deep(h1) {
+  font-size: 1.5em !important;
+  border-bottom: 1px solid #eaecef !important;
+  padding-bottom: 0.3em !important;
+}
+
+.assistant :deep(h2) {
+  font-size: 1.3em !important;
+  border-bottom: 1px solid #eaecef !important;
+  padding-bottom: 0.3em !important;
+}
+
+.assistant :deep(h3) {
+  font-size: 1.1em !important;
+}
+
+.assistant :deep(a) {
+  color: #0366d6 !important;
+  text-decoration: none !important;
+}
+
+.assistant :deep(a:hover) {
+  text-decoration: underline !important;
+}
+
+.assistant :deep(table) {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 10px 0 !important;
+}
+
+.assistant :deep(th),
+.assistant :deep(td) {
+  border: 1px solid #dfe2e5 !important;
+  padding: 6px 13px !important;
+}
+
+.assistant :deep(th) {
+  background-color: #f6f8fa !important;
+}
+
+/* 确保消息气泡适应Markdown内容 */
+.message {
+  min-width: auto !important; /* 覆盖之前的200px最小宽度 */
+  width: auto !important;
+  max-width: 70% !important;
+}
 </style>
+

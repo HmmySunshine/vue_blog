@@ -20,9 +20,17 @@
     <div v-if="error" class="error">{{ error }}</div>
 
     <div v-if="hits.length" class="search-results">
-      <div v-for="hit in hits" :key="hit.objectID" class="search-result-item">
+      <div 
+        v-for="hit in hits" 
+        :key="hit.objectID" 
+        class="search-result-item"
+        @click="viewArticle(hit.objectID)"
+      >
         <h3 v-html="hit._highlightResult.title.value"></h3>
-        <p v-html="hit._highlightResult.summary.value" class="summary"></p>
+        <div 
+          v-html="getFormattedSummary(hit._highlightResult.summary.value)" 
+          class="summary markdown-content"
+        ></div>
         <div class="meta-info">
           <span class="category">{{ hit.categoryName }}</span>
           <span class="date">{{ formatDate(hit.createTime) }}</span>
@@ -43,6 +51,7 @@
   
   <script>
 import algoliasearch from "algoliasearch";
+import marked from 'marked'; // 添加 marked 导入
 
 export default {
   data() {
@@ -85,13 +94,27 @@ export default {
       const options = { year: "numeric", month: "short", day: "numeric" };
       return new Date(date).toLocaleDateString("en-US", options);
     },
+    viewArticle(objectID) {
+      this.$router.push(`/article/${objectID}`);
+    },
+    getFormattedSummary(summary) {
+      if (!summary) return '';
+      // 处理高亮文本
+      const processedSummary = summary.replace(
+        /<em>(.*?)<\/em>/g, 
+        '<span class="highlight">$1</span>'
+      );
+      // 转换 Markdown 并返回
+      return marked(processedSummary);
+    }
   },
 };
 </script>
   
   <style scoped>
 .search-container {
-  max-width: 800px;
+  width: 100%;
+  max-width: 1200px; /* 增加最大宽度 */
   margin: 20px auto;
   padding: 0 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -99,19 +122,26 @@ export default {
 
 .search-input-container {
   position: relative;
-  margin-bottom: 45px; /* 增加底部间距 */
+  margin-bottom: 45px;
+  width: 100%; /* 确保输入框容器占满宽度 */
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 40px 12px 16px;
+  padding: 15px 40px 15px 20px; /* 增加内边距 */
   font-size: 16px;
-  border: none;
+  border: 1px solid #e0e0e0; /* 添加边框 */
   border-radius: 10px;
-  background-color: #f5f5f7;
+  background-color: #ffffff;
   color: #1d1d1f;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
 .algolia-attribution {
@@ -139,16 +169,19 @@ export default {
 .search-results {
   position: relative;
   z-index: 1; /* 确保在 Algolia 标识下方 */
-  margin-top: 10px; /* 增加与 Algolia 标识的间距 */
+  margin-top: 20px;
+  width: 100%; /* 确保结果区域占满宽度 */
 }
 
 .search-result-item {
-  padding: 20px;
-  margin-bottom: 16px;
+  width: 100%; /* 确保每个结果项占满宽度 */
+  padding: 24px; /* 增加内边距 */
+  margin-bottom: 20px;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease;
+  cursor: pointer; /* 添加鼠标指针样式 */
 }
 
 .search-result-item:hover {
@@ -168,6 +201,9 @@ h3 {
   color: #1d1d1f;
   line-height: 1.5;
   margin: 0 0 12px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .meta-info {
@@ -242,6 +278,21 @@ h3 {
   }
 }
 
+@media (max-width: 768px) {
+  .search-container {
+    padding: 0 15px;
+  }
+
+  .search-input {
+    font-size: 16px;
+    padding: 12px 30px 12px 15px;
+  }
+
+  .search-result-item {
+    padding: 20px;
+  }
+}
+
 @media (max-width: 600px) {
   .search-container {
     padding: 0 16px;
@@ -253,6 +304,75 @@ h3 {
 
   .search-result-item {
     padding: 16px;
+  }
+}
+
+/* 添加 Markdown 内容样式 */
+.markdown-content {
+  color: #1d1d1f;
+  line-height: 1.6;
+}
+
+.markdown-content :deep(p) {
+  margin: 0 0 0.5em 0;
+}
+
+.markdown-content :deep(code) {
+  background: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Monaco, Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content :deep(pre) {
+  background: #f6f8fa;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.markdown-content :deep(ul), 
+.markdown-content :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 4px solid #dfe2e5;
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: #6a737d;
+}
+
+/* 高亮样式 */
+.markdown-content :deep(.highlight) {
+  background-color: rgba(84, 104, 255, 0.1);
+  color: #5468ff;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* 自定义滚动条样式 */
+.summary::-webkit-scrollbar {
+  width: 4px;
+}
+
+.summary::-webkit-scrollbar-track {
+  background: #f5f5f7;
+}
+
+.summary::-webkit-scrollbar-thumb {
+  background: #c1c1c4;
+  border-radius: 2px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .summary {
+    max-height: 150px;
+    font-size: 13px;
   }
 }
 </style>

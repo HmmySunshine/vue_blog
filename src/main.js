@@ -9,10 +9,13 @@ import axios from 'axios'
 
 Vue.use(ElementUI)  
 Vue.config.productionTip = false
-Vue.prototype.$baseUrl = ''; // 设置全局的baseUrl
-// Vue.prototype.$baseUrl = 'http://localhost:8090'; // Windows 环境下的值
+//Vue.prototype.$baseUrl = ''; // 设置全局的baseUrl
+Vue.prototype.$baseUrl = 'http://localhost:8090'; // Windows 环境下的值
 // 创建事件总线
 Vue.prototype.$eventBus = new Vue()
+
+// 设置 axios 默认 baseURL
+axios.defaults.baseURL = Vue.prototype.$baseUrl;
 
 // 添加请求拦截器
 axios.interceptors.request.use(
@@ -35,7 +38,7 @@ axios.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          ElementUI.Message.error('登录已过期，请重新登录')
+          ElementUI.Message.error('Token已过期，请重新登录')
           // 清除所有登录信息
           localStorage.removeItem('token')
           localStorage.removeItem('username')

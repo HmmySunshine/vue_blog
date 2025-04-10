@@ -1,4 +1,4 @@
-# simple_test
+# personal-blog-vue
 
 ## Project setup
 ```

@@ -15,7 +15,7 @@
     </div>
 
     <!-- Article Content -->
-    <div class="article-content" v-html="article.content"></div>
+    <div class="article-content markdown-content" v-html="formattedContent"></div>
 
     <!-- Comments Section -->
     <div class="comments-section">
@@ -84,6 +84,7 @@
   
   <script>
 import axios from "axios";
+import marked from 'marked'; // 导入 marked
 
 export default {
   data() {
@@ -97,6 +98,11 @@ export default {
       pageSize: 5,
       currentPage: 1,
     };
+  },
+  computed: {
+    formattedContent() {
+      return this.article.content ? marked(this.article.content) : '';
+    }
   },
   mounted() {
     this.fetchArticleDetail();
@@ -217,20 +223,25 @@ export default {
   
   <style scoped>
 .article-container {
-  max-width: 800px;
+  max-width: 1200px; /* 增加最大宽度 */
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 60px; /* 为底部备案信息留出空间 */
 }
 
 .article-header {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   text-align: center;
 }
 
 .article-title {
-  font-size: 2em;
+  font-size: 2.5em; /* 增大标题字号 */
   color: #2c3e50;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  line-height: 1.4;
 }
 
 .article-meta {
@@ -238,77 +249,248 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 20px;
+  font-size: 1.1em; /* 增大元信息字号 */
 }
 
 .article-time {
-  font-size: 0.9em;
+  font-size: 1em;
   color: #909399;
 }
 
 .article-content {
-  line-height: 1.8;
+  line-height: 2;
   color: #2c3e50;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
+  font-size: 1.1em; /* 增大正文字号 */
+  padding: 0 20px; /* 添加内边距 */
 }
 
 .comments-section {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #eeeeee;
+  margin-top: 60px;
+  padding-top: 30px;
+  border-top: 2px solid #eee;
+  width: 100%; /* 确保评论区占满容器宽度 */
 }
 
 .comments-section h3 {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: #2c3e50;
+  font-size: 1.8em;
 }
 
 .comment-form {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.comment-form .el-input {
+  margin-bottom: 15px;
 }
 
 .submit-btn {
-  margin-top: 10px;
+  margin-top: 15px;
+  padding: 10px 25px;
 }
 
 .comments-list {
-  margin-top: 20px;
+  margin-top: 30px;
+  width: 100%;
 }
 
 .comment-item {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
 }
 
 .comment-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
 }
 
 .username {
   font-weight: bold;
   color: #409eff;
+  font-size: 1.1em;
 }
 
 .comment-time {
   color: #909399;
-  font-size: 0.9em;
+  font-size: 0.95em;
 }
 
 .comment-content {
   color: #2c3e50;
-  line-height: 1.6;
+  line-height: 1.8;
+  padding: 15px;
+  font-size: 1.1em;
 }
 
 .no-comments {
   text-align: center;
   color: #909399;
-  padding: 20px;
+  padding: 30px;
+  font-size: 1.1em;
 }
 
-/* 确保文章内容中的图片不会溢出容器 */
+/* 确保文章内容中的图片不会溢出容器并且居中显示 */
 :deep(.article-content img) {
   max-width: 100%;
   height: auto;
+  display: block;
+  margin: 20px auto;
+}
+
+/* 添加响应式布局 */
+@media (max-width: 1200px) {
+  .article-container {
+    max-width: 95%;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .article-container {
+    padding: 15px;
+  }
+  
+  .article-title {
+    font-size: 2em;
+  }
+  
+  .article-content {
+    padding: 0 10px;
+  }
+}
+
+/* 添加 Markdown 样式 */
+.markdown-content :deep(h1) {
+  font-size: 2em;
+  margin: 1.5em 0 1em;
+  border-bottom: 2px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content :deep(h2) {
+  font-size: 1.5em;
+  margin: 1.5em 0 1em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content :deep(h3) {
+  font-size: 1.25em;
+  margin: 1em 0;
+}
+
+.markdown-content :deep(p) {
+  margin: 1em 0;
+  line-height: 1.8;
+}
+
+.markdown-content :deep(blockquote) {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  color: #666;
+  border-left: 4px solid #42b983;
+  background-color: #f8f8f8;
+}
+
+.markdown-content :deep(code) {
+  background-color: #f8f8f8;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: Consolas, Monaco, 'Andale Mono', monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content :deep(pre) {
+  background-color: #f8f8f8;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.markdown-content :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content :deep(a) {
+  color: #42b983;
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  border: 1px solid #dfe2e5;
+  padding: 0.6em 1em;
+  text-align: left;
+}
+
+.markdown-content :deep(th) {
+  background-color: #f6f8fa;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  padding-left: 2em;
+  margin: 1em 0;
+}
+
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5em auto;
+  border-radius: 5px;
+}
+
+/* 代码高亮主题 */
+.markdown-content :deep(pre) {
+  background: #2d2d2d;
+  color: #ccc;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.markdown-content :deep(pre code) {
+  color: #ccc;
+  background: transparent;
+  padding: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .markdown-content :deep(h1) {
+    font-size: 1.8em;
+  }
+
+  .markdown-content :deep(h2) {
+    font-size: 1.4em;
+  }
+
+  .markdown-content :deep(h3) {
+    font-size: 1.2em;
+  }
+  
+  .markdown-content :deep(pre) {
+    padding: 0.8em;
+  }
 }
 </style>

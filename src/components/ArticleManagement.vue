@@ -113,7 +113,7 @@
               <el-option
                 v-for="category in categories"
                 :key="category.id"
-                :label="category.name"
+                :label="category.name "
                 :value="category.id"
               >
               </el-option>
@@ -223,9 +223,11 @@
       async fetchCategories() {
         try {
           const response = await axios.get(`${this.$baseUrl}/api/categories`);
+    
+
           this.categories = response.data.data.categories.map((category) => ({
             id: category.id,
-            name: category.name,
+            name: category.name,//
           }));
         } catch (error) {
           Message.error("获取分类失败");
@@ -273,17 +275,25 @@
         try {
           const response = await axios.get(`${this.$baseUrl}/api/articles/${article.id}/tags`);
           const tags = response.data.data.map((tag) => tag.name);
+          
+          // 处理未分类的情况
+          const category = article.category || { id: -1, name: "未分类" };
+      
           this.editForm = {
             id: article.id,
             title: article.title,
-            category: { id: article.category.id, name: article.category.name },
+            category: { 
+              id: category.id,
+              name: category.name 
+            },
             content: article.content,
             tags: tags,
           };
+          
           this.showEditDialog = true;
         } catch (error) {
-          Message.error("获取文章标签失败");
-          console.error("获取文章标签失败:", error);
+          Message.error("编辑文章失败");
+          console.error("编辑文章失败:", error);
         }
       },
       async deleteArticle(id) {
@@ -313,11 +323,15 @@
       },
       async submitEdit() {
         try {
+          const selectedCategory = this.editForm.category.id === -1 ? null : 
+            this.categories.find((cat) => cat.id === this.editForm.category.id);
+      
           await axios.put(`${this.$baseUrl}/api/articles/${this.editForm.id}`, {
             ...this.editForm,
-            category: this.categories.find((cat) => cat.id === this.editForm.category.id),
+            category: selectedCategory,
             tags: this.editForm.tags,
           });
+          
           this.showEditDialog = false;
           Message.success('更新成功');
           await this.fetchArticles();

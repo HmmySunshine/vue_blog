@@ -145,7 +145,11 @@ export default {
 
     async uploadFile() {
       if (!this.newFile.file) return;
-
+      const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+      if (this.newFile.file.size > MAX_SIZE) {
+        alert("文件大小不能超过 100MB");
+        return;
+      }
       this.isUploading = true;
       const formData = new FormData();
       formData.append("file", this.newFile.file);

@@ -1,5 +1,5 @@
 {
-  "name": "simple_test",
+  "name": "personal-website",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,12 +10,14 @@
   "dependencies": {
     "@algolia/autocomplete-js": "^1.17.7",
     "@algolia/autocomplete-theme-classic": "^1.17.7",
-    "@fortawesome/fontawesome-free": "^6.7.1",
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@johmun/vue-tags-input": "^2.1.0",
+    "@toast-ui/editor": "^3.2.2",
     "algoliasearch": "^4.14.3",
     "axios": "^1.7.7",
     "chart.js": "^4.4.4",
     "core-js": "^3.8.3",
+    "echarts": "^4.9.0",
     "element-ui": "^2.15.14",
     "eventsource-polyfill": "^0.9.6",
     "instantsearch.css": "^7.4.5",
@@ -24,6 +26,7 @@
     "three": "^0.121.0",
     "vanta": "^0.5.24",
     "vue": "^2.6.14",
+    "vue-echarts": "^4.1.0",
     "vue-instantsearch": "^2.7.1",
     "vue-router": "^3.6.5",
     "wangeditor": "^4.7.15"

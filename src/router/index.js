@@ -3,7 +3,8 @@ import VueRouter from 'vue-router'
 import AdminDashboard from '../components/AdminDashboard.vue'
 import LoginTest from '../components/LoginTest.vue'
 import TestChat from '@/components/TestChat.vue'
-import RegisterTest from '@/components/RegisterTest.vue'
+// 替换旧的 RegisterTest 引入
+import RegisterView from '@/views/RegisterView.vue'
 import PhotoWall from '@/components/PhotoWall.vue'
 //import { component } from 'vue/types/umd'
 import FileDown from '@/components/FileDown.vue'
@@ -41,7 +42,8 @@ const routes = [
   {
 	path:'/register',
 	name:'Register',
-	component: RegisterTest
+	// 更新组件引用
+	component: RegisterView
   },
   {
     path:'/alist',
@@ -63,7 +65,8 @@ const routes = [
   {
     path: '/article/:id',
     name: 'ArticleDetail',
-    component: ArticleDetail
+    component: ArticleDetail,
+    props: true
   }
   ,
   {
@@ -71,7 +74,37 @@ const routes = [
     name : 'Timeline',
     component : () => import('@/components/TimeLine.vue')
   }
-  
+  ,
+  {
+    path: '/tags',
+    name: 'tags',
+    component: () => import('@/views/TagsView.vue')
+  },
+  {
+    path: '/categories',
+    name: 'categories',
+    component: () => import('@/views/CategoriesView.vue')
+  },
+  {
+    path: '/tag/:tagId',
+    name: 'tagArticles',
+    component: () => import('@/components/TagArticles.vue')  // 修改为 components 目录
+  },
+  {
+    path: '/category/uncategorized',
+    name: 'uncategorizedArticles',
+    component: () => import('@/components/CategoryArticles.vue'),
+    beforeEnter: (to, from, next) => {
+      // 确保设置了 categoryId
+      to.params.categoryId = 'uncategorized';
+      next();
+    }
+  },
+  {
+    path: '/category/:categoryId',
+    name: 'CategoryArticles',
+    component: () => import('@/components/CategoryArticles.vue')
+  }
 ]
 
 const router = new VueRouter({

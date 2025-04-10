@@ -44,10 +44,6 @@
           ></textarea>
         </div>
       </div>
-      <div class="preview-panel">
-        <h3>预览区域</h3>
-        <div class="preview-content" v-html="article.content"></div>
-      </div>
     </div>
     <div class="editor-footer">
       <button class="btn btn-secondary" @click="returnToList">返回列表</button>
@@ -57,7 +53,8 @@
 </template>
   
   <script>
-import E from "wangeditor";
+import '@toast-ui/editor/dist/toastui-editor.css';
+import { Editor } from '@toast-ui/editor';
 import axios from "axios";
 import VueTagsInput from "@johmun/vue-tags-input";
 
@@ -96,49 +93,53 @@ export default {
   },
   methods: {
     initEditor() {
-      this.editor = new E(this.$refs.editorElem);
+      this.editor = new Editor({
+        el: this.$refs.editorElem,
+        height: '500px',
+        initialEditType: 'markdown', // 默认使用 markdown 模式
+        previewStyle: 'vertical',    // 左侧编辑，右侧预览
+        placeholder: '请输入文章内容...',
+        
 
-      this.editor.config.height = 500;
-      this.editor.config.placeholder = "请输入文章内容...";
+        hooks: {
+          addImageBlobHook: async (blob, callback) => {
+            // 处理图片上传
+            //图片上传限制（>1MB）
+            if (blob.size > 1024 * 1024) {
+              alert('图片大小不能超过1MB');
+              return;
+            }
+            try {
+              const formData = new FormData();
+              formData.append('file', blob);
+              
+              const response = await axios.post(
+                `${this.$baseUrl}/api/image`,
+                formData,
+                {
+                  headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'multipart/form-data'
+                  }
+                }
+              );
 
-      this.editor.config.uploadImgServer = `${this.$baseUrl}/api/image`;
-      this.editor.config.uploadImgHeaders = {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      };
-
-      this.editor.config.uploadImgHooks = {
-        success: (_xhr, _editor, result) => {
-          console.log("上传结果：", result);
-          
-          if (result && result.errno === 0 && result.data && result.data.length > 0) {
-            if (!this.tempImages) this.tempImages = [];
-
-            const imageUrl = result.data[0].url;
-            console.log("图片URL：", imageUrl);
-            this.tempImages.push({
-              url: imageUrl,
-            });
-
-            console.log("临时图片列表：", this.tempImages);
+              if (response.data.errno === 0) {
+                const imageUrl = response.data.data[0].url;
+                callback(imageUrl);
+                this.tempImages.push({ url: imageUrl });
+              }
+            } catch (error) {
+              console.error('图片上传失败:', error);
+            }
           }
         },
-        fail: (result) => {
-          console.error("图片上传失败：", result);
-        },
-        error: () => {
-          console.error("图片上传出错");
-        },
-      };
-
-      this.editor.config.uploadFileName = "file";
-      this.editor.config.menus = this.editor.config.menus.filter(
-        (menu) => menu !== "video"
-      );
-      this.editor.config.onchange = (newHtml) => {
-        this.article.content = newHtml;
-      };
-
-      this.editor.create();
+        events: {
+          change: () => {
+            this.article.content = this.editor.getMarkdown();
+          }
+        }
+      });
     },
     async fetchCategories() {
       try {
@@ -219,8 +220,9 @@ export default {
   
   <style scoped>
 .article-editor {
-  max-width: 1200px;
+  max-width: 1000px; /* 缩小最大宽度 */
   margin: 0 auto;
+  padding: 20px;
 }
 
 .editor-title {
@@ -230,9 +232,6 @@ export default {
 }
 
 .editor-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
   margin-bottom: 20px;
 }
 
@@ -265,38 +264,12 @@ export default {
 }
 
 .editor-wrapper {
-  overflow: visible !important;
-}
-
-.preview-panel {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.editor-wrapper {
-  background-color: #fff; /* 浅色背景 */
-  color: #333; /* 深色文本 */
-  min-height: 500px;
+  margin: 20px 0;
+  background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 15px;
   overflow-y: auto;
-}
-
-.preview-panel h3 {
-  margin-bottom: 15px;
-  color: #666;
-}
-
-.preview-content {
-  min-height: 500px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  padding: 15px;
-  overflow-y: auto;
-  color: #333; /* 确保文字颜色对比度足够 */
-  background-color: #fff; /* 确保背景色为浅色 */
 }
 
 .editor-footer {
@@ -331,5 +304,13 @@ export default {
 
 .btn-secondary:hover {
   background-color: #e8e8e8;
+}
+
+.toastui-editor-defaultUI {
+  border-radius: 4px;
+}
+
+.toastui-editor-defaultUI-toolbar {
+  background-color: #f9f9f9;
 }
 </style>

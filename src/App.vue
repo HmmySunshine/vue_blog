@@ -12,7 +12,7 @@
           @mouseenter="isNavbarHovered = true"
           @mouseleave="isNavbarHovered = false"
         >
-          <div class="navbar-brand">範澤昊的梦想屋</div>
+          <div class="navbar-brand">天行健，君子以自强不息</div>
           <div class="navbar-menu">
             <router-link to="/" class="navbar-item">
               <i class="fas fa-home"></i> 首页
@@ -23,14 +23,14 @@
               </router-link>
               <div class="navbar-dropdown">
                 <div class="dropdown-content">
-                  <router-link to="/articles/data-structures" class="navbar-item">
-                    <i class="fas fa-paw"></i> 数据结构
+                  <router-link to="/articles" class="navbar-item">
+                    <i class="fas fa-paw"></i> 文章列表
                   </router-link>
-                  <router-link to="/articles/algorithms" class="navbar-item">
-                    <i class="fas fa-chevron-right"></i> 算法
+                  <router-link to="/categories" class="navbar-item">
+                    <i class="fas fa-folder"></i> 分类
                   </router-link>
-                  <router-link to="/articles/notes" class="navbar-item">
-                    <i class="fas fa-file-alt"></i> 学习笔记
+                  <router-link to="/tags" class="navbar-item">
+                    <i class="fas fa-tags"></i> 标签
                   </router-link>
                 </div>
               </div>
@@ -64,6 +64,7 @@
         <main class="main-content">
           <router-view @login="handleLogin"></router-view>
         </main>
+        <SiteFooter v-if="showFooter" />
       </div>
       <div v-else class="admin-container">
         <router-view @login="handleLogin"></router-view>
@@ -72,11 +73,15 @@
   </template>
   
   <script>
+  import SiteFooter from "./components/SiteFooter.vue";
   import * as THREE from "three";
   import BIRDS from "vanta/src/vanta.birds";
   
   export default {
     name: "App",
+    components: {
+        SiteFooter
+    },
     data() {
       return {
         isLoggedIn: false,
@@ -84,11 +89,13 @@
         isNavbarHovered: false,
         vantaEffect: null,
         showVantaBackground: false,
+        showFooter: true
       };
     },
     watch: {
       $route(to) {
         this.updateVantaBackground(to.path);
+        this.showFooter = !to.path.startsWith('/admin');
       },
     },
     methods: {
@@ -215,6 +222,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #1d1d1f;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 60px; /* 为备案信息预留空间 */
   }
   
   .app-container {
@@ -368,6 +378,27 @@
     padding-top: 44px;
     position: relative;
     z-index: 1;
+    min-height: calc(100vh - 84px); /* 减去导航栏和底部的高度 */
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 40px; /* 为备案信息留出空间 */
+  }
+
+  /* 确保路由视图占满剩余空间 */
+  .main-content > * {
+    flex: 1;
+  }
+  
+  /* 确保底部在内容较少时固定在底部 */
+  .site-footer {
+    margin-top: auto;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
   }
   
   .admin-container {
